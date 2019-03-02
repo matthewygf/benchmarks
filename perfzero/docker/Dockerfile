@@ -83,7 +83,7 @@ RUN wget -qO- http://archive.apache.org/dist/hadoop/common/hadoop-${HADOOP_VERSI
     mv /usr/local/hadoop-${HADOOP_VERSION} /usr/local/hadoop
 
 ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 \
-    HADOOP_INSTALL=/user/local/hadoop \
+    HADOOP_INSTALL=/usr/local/hadoop \
     NVIDIA_VISIBLE_DEVICES=all
 
 # set HADOOP PATHS
