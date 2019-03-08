@@ -38,6 +38,8 @@ ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:$LD_LIBRARY_PATH
 # See http://bugs.python.org/issue19846
 ENV LANG C.UTF-8
 
+ARG tensorflow_pip_spec="tf-nightly-gpu"
+
 # Add google-cloud-sdk to the source list
 RUN echo "deb http://packages.cloud.google.com/apt cloud-sdk-$(lsb_release -c -s) main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
 RUN curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
@@ -109,8 +111,7 @@ RUN pip3 install --upgrade pip==9.0.1
 # setuptools upgraded to fix install requirements from model garden.
 RUN pip3 install --upgrade setuptools google-api-python-client pyyaml google-cloud google-cloud-bigquery
 RUN pip3 install wheel absl-py
-# NOTE: tf-nightly-gpu is version 1.xx 
-RUN pip3 install --upgrade --force-reinstall tf-nightly-gpu
+RUN pip3 install --upgrade --force-reinstall ${tensorflow_pip_spec}
 
 RUN curl https://raw.githubusercontent.com/tensorflow/models/master/official/requirements.txt > /tmp/requirements.txt
 RUN pip3 install -r /tmp/requirements.txt
