@@ -164,6 +164,12 @@ def add_benchmark_parser_arguments(parser):
       help='The directory which should contain the dataset required by the becnhmark method.'
       )
   parser.add_argument(
+      '--root_output_dir',
+      default='/output',
+      type=str,
+      help='The directory which should be output to (optionally) required by the becnhmark method.'
+      )
+  parser.add_argument(
       '--data_downloads',
       default=None,
       type=str,
