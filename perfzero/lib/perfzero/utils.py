@@ -142,7 +142,7 @@ def download_data(download_infos):
                     data download
   """
   for info in download_infos:
-    if os.path.exists(info['local_path']):
+    if tf.io.gfile.exists(info['local_path']):
       continue
     original_base_name = os.path.basename(info['url'])
     expected_base_name = os.path.basename(info['local_path'])
