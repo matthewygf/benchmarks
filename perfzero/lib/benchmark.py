@@ -41,7 +41,7 @@ class BenchmarkRunner(object):
     project_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     self.workspace_dir = os.path.join(project_dir, config.workspace)
     self.site_packages_dir = os.path.join(self.workspace_dir, 'site-packages')
-    self.root_output_dir = os.path.join(self.workspace_dir, 'output')
+    self.root_output_dir = os.path.join(config.output_dir, 'output')
     self.benchmark_execution_time = {}
 
   def _setup(self):

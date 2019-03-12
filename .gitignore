@@ -93,3 +93,4 @@ ENV/
 
 # For mac
 .DS_Store
+perfzero/.vscode/settings.json

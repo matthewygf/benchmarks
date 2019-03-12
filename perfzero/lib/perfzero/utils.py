@@ -22,6 +22,7 @@ import sys
 import threading
 import traceback
 import requests
+import tensorflow as tf
 
 
 def checkout_git_repos(git_repos, force_update):
@@ -220,8 +221,8 @@ def maybe_upload_to_gcs(local_dir, output_gcs_url):
 
 
 def make_dir_if_not_exist(local_path):
-  if not os.path.exists(local_path):
-    os.makedirs(local_path)
+  if not tf.io.gfile.exists(local_path):
+    tf.io.gfile.makedirs(local_path)
     logging.info('Created directory %s', local_path)
 
 
