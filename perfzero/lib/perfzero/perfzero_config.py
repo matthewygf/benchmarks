@@ -222,6 +222,7 @@ class PerfZeroConfig(object):
       self.workspace = flags.workspace
       self.force_update = flags.force_update
       self.root_data_dir = flags.root_data_dir
+      self.root_output_dir = flags.root_output_dir
       self.gcloud_key_file_url = flags.gcloud_key_file_url
       self.profiler_enabled_time_str = flags.profiler_enabled_time
 
