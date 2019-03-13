@@ -191,14 +191,6 @@ class BenchmarkRunner(object):
                    benchmark_method, json.dumps(execution_summary, indent=2))
       utils.maybe_upload_to_gcs(output_dir, self.config.output_gcs_url)
       logging.getLogger().removeHandler(filehandler)
-      # tf file write to hdfs.
-      if tf.io.gfile.exists(log_file):
-        print("starting to copt from local log file to user define output dir")
-        try :
-          tf.io.gfile.copy(log_file, os.path.join(self.config.root_output_dir, LOG_FILE_NAME))
-          print("copied log file to ")
-        except tf.OpError as er:
-          print(er.message)
 
       self.benchmark_execution_time[benchmark_method] = {}
       self.benchmark_execution_time[benchmark_method]['class_initialization'] = execution_timestamp - start_timestamp  # pylint: disable=line-too-long
@@ -218,6 +210,23 @@ class BenchmarkRunner(object):
         json.dumps(benchmark_success_results, indent=2)))
     print('Benchmark local output directories:\n{}'.format(
         json.dumps(benchmark_output_dirs, indent=2)))
+
+     # tf file write to hdfs.
+    if tf.io.gfile.exists(output_dir):
+      print("starting to copy from local dir to user define output dir")
+      try :
+        # create the execution id dir
+        remote_execution_dir = os.path.join(self.config.root_output_dir, execution_id)
+        tf.io.gfile.makedirs(remote_execution_dir)
+        for top, dirs, files in tf.io.gfile.walk(output_dir):
+          for name in files:
+            local_name = os.path.join(top, name)
+            remote_name = os.path.join(remote_execution_dir, name)
+            tf.io.gfile.copy(local_name, remote_name)
+            print("copied file from %s to %s" % (local_name, remote_name))
+      except tf.OpError as er:
+        print(er.message)
+
     if has_exception:
       sys.exit(1)
 
