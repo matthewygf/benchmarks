@@ -25,6 +25,7 @@ import re
 import sys
 import time
 import traceback
+import tensorflow as tf
 
 import perfzero.perfzero_config as perfzero_config
 from perfzero.process_info_tracker import ProcessInfoTracker
@@ -32,6 +33,7 @@ import perfzero.report_utils as report_utils
 from perfzero.tensorflow_profiler import TensorflowProfiler
 import perfzero.utils as utils
 
+LOG_FILE_NAME = 'perfzero.log'
 
 class BenchmarkRunner(object):
   """Execute benchmark and report results."""
@@ -41,7 +43,7 @@ class BenchmarkRunner(object):
     project_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     self.workspace_dir = os.path.join(project_dir, config.workspace)
     self.site_packages_dir = os.path.join(self.workspace_dir, 'site-packages')
-    self.root_output_dir = os.path.join(self.config.root_output_dir, 'output')
+    self.workspace_output = os.path.join(self.workspace_dir, 'output')
     self.benchmark_execution_time = {}
 
   def _setup(self):
@@ -51,7 +53,7 @@ class BenchmarkRunner(object):
     start_time = time.time()
     utils.setup_python_path(self.site_packages_dir, self.config.python_path_str)
     utils.active_gcloud_service(self.config.gcloud_key_file_url, self.workspace_dir)  # pylint: disable=line-too-long
-    utils.make_dir_if_not_exist(self.root_output_dir)
+    utils.make_dir_if_not_exist(self.workspace_output)
     self.benchmark_execution_time['activate_gcloud_service'] = time.time() - start_time  # pylint: disable=line-too-long
 
     # Download data
@@ -105,7 +107,7 @@ class BenchmarkRunner(object):
       execution_timestamp = start_timestamp
       method_has_exception = False
       execution_id = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S-%f')
-      output_dir = os.path.join(self.root_output_dir, execution_id)
+      output_dir = os.path.join(self.workspace_output, execution_id)
       utils.make_dir_if_not_exist(output_dir)
       benchmark_output_dirs[benchmark_method] = output_dir
       benchmark_class, benchmark_method_name = benchmark_method.rsplit('.', 1)
@@ -116,8 +118,9 @@ class BenchmarkRunner(object):
       process_info = None
 
       # Setup per-method file logger
+      log_file = os.path.join(output_dir, LOG_FILE_NAME)
       filehandler = logging.FileHandler(
-          filename=os.path.join(output_dir, 'perfzero.log'), mode='w')
+          filename=log_file, mode='w')
       filehandler.setFormatter(
           logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
       logging.getLogger().addHandler(filehandler)
@@ -188,6 +191,15 @@ class BenchmarkRunner(object):
                    benchmark_method, json.dumps(execution_summary, indent=2))
       utils.maybe_upload_to_gcs(output_dir, self.config.output_gcs_url)
       logging.getLogger().removeHandler(filehandler)
+      # tf file write to hdfs.
+      if tf.io.gfile.exists(log_file):
+        print("starting to copt from local log file to user define output dir")
+        try :
+          tf.io.gfile.copy(log_file, os.path.join(self.config.root_output_dir, LOG_FILE_NAME))
+          print("copied log file to ")
+        except tf.OpError as er:
+          print(er.message)
+
       self.benchmark_execution_time[benchmark_method] = {}
       self.benchmark_execution_time[benchmark_method]['class_initialization'] = execution_timestamp - start_timestamp  # pylint: disable=line-too-long
       self.benchmark_execution_time[benchmark_method]['method_execution'] = upload_timestamp - execution_timestamp  # pylint: disable=line-too-long
