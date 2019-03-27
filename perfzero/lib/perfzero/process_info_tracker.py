@@ -31,7 +31,8 @@ class ProcessInfoTracker(object):
   """Keep track of process information such as maximum memory usage with separate thread."""
 
   def __init__(self, output_dir):
-    self.process_info_log = open(os.path.join(output_dir, 'process_info.log'), 'w')  # pylint: disable=line-too-long
+    self.process_info_log = open(os.path.join(output_dir, 'process_info.log'),
+                                 'w')
     self.scheduler = sched.scheduler(time.time, time.sleep)
     self.process_info = {}
     self.process_info['max_rss'] = 0
@@ -66,9 +67,12 @@ class ProcessInfoTracker(object):
       # This affects the interval # at which the metrics are reported
       cpu_percent = p.cpu_percent(interval=0.1)
 
-      self.process_info['max_rss'] = max(self.process_info['max_rss'], memory_info.rss)  # pylint: disable=line-too-long
-      self.process_info['max_vms'] = max(self.process_info['max_vms'], memory_info.vms)  # pylint: disable=line-too-long
-      self.process_info['max_cpu_percent'] = max(self.process_info['max_cpu_percent'], cpu_percent)  # pylint: disable=line-too-long
+      self.process_info['max_rss'] = max(self.process_info['max_rss'],
+                                         memory_info.rss)
+      self.process_info['max_vms'] = max(self.process_info['max_vms'],
+                                         memory_info.vms)
+      self.process_info['max_cpu_percent'] = max(
+          self.process_info['max_cpu_percent'], cpu_percent)
 
       entry = {}
       entry['time'] = time.time() - self.start_time
@@ -79,7 +83,7 @@ class ProcessInfoTracker(object):
       if not self.exit_event.is_set():
         # Schedule the next event to be run after 1 second
         self.scheduler.enter(1, 1, self._update_process_info)  # pylint: disable=no-value-for-parameter
-    except Exception as e:  # pylint: disable=W0703
+    except Exception as e:  # pylint: disable=broad-except
       logging.error('Process info tracker failed due to error:\n %s',
                     traceback.format_exc())
       self.last_exception = e

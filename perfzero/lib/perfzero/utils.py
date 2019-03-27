@@ -15,6 +15,7 @@
 """PerfZero utility methods."""
 from __future__ import print_function
 
+import importlib
 import logging
 import os
 import subprocess
@@ -25,12 +26,12 @@ import requests
 import tensorflow as tf
 
 
-def checkout_git_repos(git_repos, force_update):
+def checkout_git_repos(git_repos, use_cached_site_packages):
   """Clone, update, or sync a repo.
 
   Args:
     git_repos: array of dict containing attributes of the git repo to checkout
-    force_update: Always do git pull if True
+    use_cached_site_packages: If true, skip git pull if the git_repo already exists
 
   Returns:
     A dict containing attributes of the git repositories
@@ -44,7 +45,7 @@ def checkout_git_repos(git_repos, force_update):
     if 'branch' in repo:
       run_commands(['git -C {} checkout {}'.format(
           repo['local_path'], repo['branch'])])
-    if force_update or 'git_hash' in repo:
+    if not use_cached_site_packages or 'git_hash' in repo:
       run_commands(['git -C {} pull'.format(repo['local_path'])])
     if 'git_hash' in repo:
       run_commands(['git -C {} reset --hard {}'.format(
@@ -104,7 +105,8 @@ def setup_python_path(site_packages_dir, python_path_str):
   logging.debug('PYTHONPATH: %s', sys.path)
 
 
-def active_gcloud_service(gcloud_key_file_url, workspace_dir, download_only=False):  # pylint: disable=line-too-long
+def active_gcloud_service(gcloud_key_file_url, workspace_dir,
+                          download_only=False):
   """Download key file and setup gcloud service credential using the key file.
 
   Args:
@@ -116,13 +118,15 @@ def active_gcloud_service(gcloud_key_file_url, workspace_dir, download_only=Fals
   if not gcloud_key_file_url:
     return
 
-  local_path = os.path.join(workspace_dir, os.path.basename(gcloud_key_file_url))  # pylint: disable=line-too-long
+  local_path = os.path.join(workspace_dir,
+                            os.path.basename(gcloud_key_file_url))
   if not os.path.exists(local_path):
     download_data([{'url': gcloud_key_file_url, 'local_path': local_path}])
 
   if not download_only:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = local_path
-    run_commands(['gcloud auth activate-service-account --key-file {}'.format(local_path)])  # pylint: disable=line-too-long
+    run_commands(['gcloud auth activate-service-account --key-file {}'.format(
+        local_path)])
     logging.info('Activated gcloud service account credential')
 
 
@@ -197,10 +201,10 @@ def parse_data_downloads_str(root_data_dir, data_downloads_str):
     info = {}
     if ';' in entry:
       info['url'] = entry.split(';')[0]
-      info['local_path'] = os.path.join(root_data_dir, entry.split(';')[1])  # pylint: disable=line-too-long
+      info['local_path'] = os.path.join(root_data_dir, entry.split(';')[1])
     else:
       info['url'] = entry
-      info['local_path'] = os.path.join(root_data_dir, os.path.basename(entry))  # pylint: disable=line-too-long
+      info['local_path'] = os.path.join(root_data_dir, os.path.basename(entry))
     # Canonicalize url to remove trailing '/' and '*'
     if info['url'].endswith('*'):
       info['url'] = info['url'][:-1]
@@ -335,3 +339,14 @@ def print_thread_stacktrace():
   for thread_id, frame in sys._current_frames().items():  # pylint: disable=protected-access
     print('Thread {}'.format(thread_names.get(thread_id, thread_id)))
     traceback.print_stack(frame)
+
+
+def instantiate_benchmark_class(benchmark_class, output_dir, root_data_dir):
+  """Return initialized benchmark class."""
+  module_import_path, class_name = benchmark_class.rsplit('.', 1)
+  module = importlib.import_module(module_import_path)
+  class_ = getattr(module, class_name)
+  instance = class_(output_dir=output_dir, root_data_dir=root_data_dir)
+
+  return instance
+

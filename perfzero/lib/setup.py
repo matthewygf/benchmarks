@@ -35,7 +35,8 @@ if __name__ == '__main__':
   logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
                       level=logging.DEBUG)
   if unparsed:
-    logging.warning('Arguments %s are not recognized', unparsed)
+    logging.error('Arguments %s are not recognized', unparsed)
+    sys.exit(1)
 
   setup_execution_time = {}
   project_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -44,12 +45,14 @@ if __name__ == '__main__':
   # Download gcloud auth token. Remove this operation in the future when
   # docker in Kokoro can accesss the GCP metadata server
   start_time = time.time()
-  utils.active_gcloud_service(FLAGS.gcloud_key_file_url, workspace_dir, download_only=True)  # pylint: disable=line-too-long
+  utils.active_gcloud_service(FLAGS.gcloud_key_file_url,
+                              workspace_dir, download_only=True)
   setup_execution_time['download_token'] = time.time() - start_time
 
   # Set up the raid array.
   start_time = time.time()
-  device_utils.create_drive_from_devices(FLAGS.root_data_dir, FLAGS.gce_nvme_raid)  # pylint: disable=line-too-long
+  device_utils.create_drive_from_devices(FLAGS.root_data_dir,
+                                         FLAGS.gce_nvme_raid)
   setup_execution_time['create_drive'] = time.time() - start_time
 
   # Create docker image

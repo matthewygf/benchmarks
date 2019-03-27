@@ -66,9 +66,9 @@ def add_setup_parser_arguments(parser):
 def add_benchmark_parser_arguments(parser):
   """Add arguments to the parser used by the benchmark.py."""
   parser.add_argument(
-      '--force_update',
+      '--use_cached_site_packages',
       action='store_true',
-      help='If set, do git pull for dependent git repositories'
+      help='If set, skip git pull for dependent git repositories if it already exists in path_to_perfzero/${workspace}/site-packages'
       )
   parser.add_argument(
       '--gcs_downloads',
@@ -220,20 +220,23 @@ class PerfZeroConfig(object):
       self.bigquery_dataset_table_name = flags.bigquery_dataset_table_name
       self.python_path_str = flags.python_path
       self.workspace = flags.workspace
-      self.force_update = flags.force_update
+      self.use_cached_site_packages = flags.use_cached_site_packages
       self.root_data_dir = flags.root_data_dir
       self.root_output_dir = flags.root_output_dir
       self.gcloud_key_file_url = flags.gcloud_key_file_url
       self.profiler_enabled_time_str = flags.profiler_enabled_time
 
       if not flags.benchmark_methods:
-        logging.warning('No benchmark method is specified by --benchmark_methods')  # pylint: disable=line-too-long
+        logging.warning('No benchmark method is specified by '
+                        '--benchmark_methods')
 
       if flags.bigquery_project_name and not flags.bigquery_dataset_table_name:
-        raise ValueError('--bigquery_project_name is specified but --bigquery_dataset_table_name is not')  # pylint: disable=line-too-long
+        raise ValueError('--bigquery_project_name is specified but '
+                         '--bigquery_dataset_table_name is not')
 
       if not flags.bigquery_project_name and flags.bigquery_dataset_table_name:
-        raise ValueError('--bigquery_dataset_table_name is specified but --bigquery_project_name is not')  # pylint: disable=line-too-long
+        raise ValueError('--bigquery_dataset_table_name is specified but '
+                         '--bigquery_project_name is not')
 
   def get_env_vars(self):
     env_vars = {}
